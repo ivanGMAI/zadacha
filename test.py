@@ -1,2 +1,2 @@
-for i in 'zalupakonya':
+for i in 'zalupkakonya':
     print(i)

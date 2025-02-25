@@ -57,4 +57,4 @@ class Fraction:
         self.num, self.den = result.num, result.den
         return self
 
-a = {'zlocty' : 'suka'}
+a = {'zloct' : 'suka'}

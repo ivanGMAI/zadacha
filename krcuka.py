@@ -56,4 +56,4 @@ class Fraction:
         result = self.sub(other)
         self.num, self.den = result.num, result.den
         return self
-a = 1
+a = {'zlocty' : 'suka'}

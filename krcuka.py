@@ -1,7 +1,6 @@
 import math
-
 class Fraction:
-    instances = {}  # Словарь для хранения экземпляров
+    instances = {}
 
     def __new__(cls, *args):
         if len(args) == 2:
@@ -11,15 +10,14 @@ class Fraction:
         else:
             raise ValueError("Invalid arguments")
 
-        # Упрощаем дробь при создании
+
         gcd = math.gcd(num, den)
         num //= gcd
         den //= gcd
-        if den < 0:  # Приводим к стандартному виду
+        if den < 0:
             num *= -1
             den *= -1
 
-        # Создаем уникальный ключ для хранения экземпляров
         key = (num, den)
         if key not in cls.instances:
             instance = super().__new__(cls)
@@ -57,4 +55,4 @@ class Fraction:
         self.num, self.den = result.num, result.den
         return self
 
-a = {'zloct' : 'suka'}
+a = {'bobro' : 'love'}

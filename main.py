@@ -52,7 +52,7 @@ def create_book(new_book: Newbook):
         'id': new_id
     })
     return {'ok': True}
-
+a = []
 
 if __name__ == '__main__':
     uvicorn.run("main:app", reload=True)

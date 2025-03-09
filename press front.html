@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Книжная полка</title>
+  <style>
+    /* Основные стили */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #001f3f; /* Тёмно-синий фон */
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      color: #ffd700; /* Жёлтый цвет */
+      font-size: 48px;
+      margin-top: 50px;
+    }
+
+    .buttons {
+      margin-top: 30px;
+    }
+
+    .buttons button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: #007bff; /* Синий цвет */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .buttons button:hover {
+      background-color: #0056b3; /* Тёмно-синий при наведении */
+    }
+
+    .books-container, .form-container, .search-container {
+      margin-top: 20px;
+      display: none; /* Скрываем по умолчанию */
+    }
+
+    .book {
+      background-color: #228b22; /* Зелёный цвет */
+      padding: 15px;
+      margin: 10px auto;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      text-align: left;
+    }
+
+    .book h3 {
+      margin: 0;
+      color: white;
+    }
+
+    .book p {
+      margin: 5px 0;
+      color: white;
+    }
+
+    .delete-button {
+      background-color: #dc3545; /* Красный цвет */
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .delete-button:hover {
+      background-color: #c82333; /* Тёмно-красный при наведении */
+    }
+
+    .form-container, .search-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    .form-container input, .search-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .form-container button, .search-container button {
+      width: 100%;
+      padding: 10px;
+      background-color: #28a745; /* Зелёный цвет */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .form-container button:hover, .search-container button:hover {
+      background-color: #218838; /* Тёмно-зелёный при наведении */
+    }
+
+    .message {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #ffd700; /* Жёлтый цвет */
+    }
+  </style>
+</head>
+<body>
+  <h1>Книжная полка</h1>
+
+  <div class="buttons">
+    <button onclick="toggleAddBookForm()">Добавить книгу</button>
+    <button onclick="toggleBooks()">Весь список книг</button>
+    <button onclick="toggleSearch()">Поиск книги по ID</button>
+  </div>
+
+  <div class="form-container" id="add-book-form">
+    <h2>Добавить новую книгу</h2>
+    <input type="text" id="title" placeholder="Название книги" required>
+    <input type="number" id="year" placeholder="Год выпуска" required>
+    <input type="email" id="email" placeholder="Электронная почта" required>
+    <button onclick="addBook()">Добавить книгу</button>
+  </div>
+
+  <div class="books-container" id="books-container">
+    <!-- Сюда будут вставлены книги -->
+  </div>
+
+  <div class="search-container" id="search-container">
+    <h2>Поиск книги по ID</h2>
+    <input type="number" id="search-id" placeholder="Введите ID книги" required>
+    <button onclick="searchBook()">Найти книгу</button>
+    <div id="search-result"></div>
+  </div>
+
+  <div class="message" id="message"></div>
+
+  <script>
+    // Функция для загрузки всех книг
+    async function fetchBooks() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/books');
+        if (!response.ok) {
+          throw new Error('Ошибка при загрузке данных');
+        }
+        const books = await response.json();
+        displayBooks(books);
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось загрузить книги');
+      }
+    }
+
+    // Функция для добавления книги
+    async function addBook() {
+      const title = document.getElementById('title').value;
+      const year = parseInt(document.getElementById('year').value);
+      const email = document.getElementById('email').value;
+
+      if (!title || !year || !email) {
+        alert('Заполните все поля');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/books/pop', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: title,
+            data: year,
+            pocht: email,
+          }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.detail === 'Книга уже существует') {
+            showMessage('Книга уже в базе, иди домой');
+          } else {
+            throw new Error('Ошибка при добавлении книги');
+          }
+        } else {
+          const result = await response.json();
+          console.log(result);
+          showMessage('Книга добавлена');
+          toggleAddBookForm(); // Скрываем форму после добавления
+        }
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось добавить книгу');
+      }
+    }
+
+    // Функция для удаления книги
+    async function deleteBook(bookId) {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/books/${bookId}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          throw new Error('Ошибка при удалении книги');
+        }
+        const result = await response.json();
+        console.log(result);
+        fetchBooks(); // Обновляем список книг после удаления
+      } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Не удалось удалить книгу');
+      }
+    }
+
+    // Функция для поиска книги по ID
+    async function searchBook() {
+      const bookId = document.getElementById('search-id').value;
+      if (!bookId) {
+        alert('Введите ID книги');
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/books/${bookId}`);
+        if (!response.ok) {
+          throw new Error('Книга не найдена');
+        }
+        const book = await response.json();
+        const resultDiv = document.getElementById('search-result');
+        resultDiv.innerHTML = `
+          <div class="book">
+            <h3>${book.title}</h3>
+            <p><strong>Год:</strong> ${book.data}</p>
+            <p><strong>Почта:</strong> ${book.pocht}</p>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Ошибка:', error);
+        document.getElementById('search-result').innerHTML = '<p>Книга не найдена</p>';
+      }
+    }
+
+    // Функция для отображения книг
+    function displayBooks(books) {
+      const container = document.getElementById('books-container');
+      container.innerHTML = ''; // Очищаем контейнер
+
+      if (books.length === 0) {
+        container.innerHTML = '<p>Книги не найдены.</p>';
+        return;
+      }
+
+      books.forEach(book => {
+        const bookElement = document.createElement('div');
+        bookElement.className = 'book';
+        bookElement.innerHTML = `
+          <h3>${book.title}</h3>
+          <p><strong>Год:</strong> ${book.data}</p>
+          <p><strong>Почта:</strong> ${book.pocht}</p>
+          <button class="delete-button" onclick="deleteBook(${book.id})">Удалить</button>
+        `;
+        container.appendChild(bookElement);
+      });
+    }
+
+    // Функция для показа/скрытия формы добавления книги
+    function toggleAddBookForm() {
+      const form = document.getElementById('add-book-form');
+      const booksContainer = document.getElementById('books-container');
+      const searchContainer = document.getElementById('search-container');
+      if (form.style.display === 'block') {
+        form.style.display = 'none';
+      } else {
+        form.style.display = 'block';
+        booksContainer.style.display = 'none';
+        searchContainer.style.display = 'none';
+      }
+    }
+
+    // Функция для показа/скрытия списка книг
+    function toggleBooks() {
+      const booksContainer = document.getElementById('books-container');
+      const form = document.getElementById('add-book-form');
+      const searchContainer = document.getElementById('search-container');
+      if (booksContainer.style.display === 'block') {
+        booksContainer.style.display = 'none';
+      } else {
+        booksContainer.style.display = 'block';
+        form.style.display = 'none';
+        searchContainer.style.display = 'none';
+        fetchBooks(); // Загружаем книги при открытии списка
+      }
+    }
+
+    // Функция для показа/скрытия поиска книги
+    function toggleSearch() {
+      const searchContainer = document.getElementById('search-container');
+      const form = document.getElementById('add-book-form');
+      const booksContainer = document.getElementById('books-container');
+      if (searchContainer.style.display === 'block') {
+        searchContainer.style.display = 'none';
+      } else {
+        searchContainer.style.display = 'block';
+        form.style.display = 'none';
+        booksContainer.style.display = 'none';
+      }
+    }
+
+    // Функция для отображения сообщений
+    function showMessage(message) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = message;
+      setTimeout(() => {
+        messageDiv.textContent = '';
+      }, 3000); // Сообщение исчезает через 3 секунды
+    }
+  </script>
+</body>
+</html>

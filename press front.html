@@ -119,6 +119,36 @@
       font-size: 18px;
       color: #ffd700; /* Жёлтый цвет */
     }
+
+    /* Стили для результатов поиска */
+    #search-result {
+      color: black; /* Чёрный цвет текста */
+      margin-top: 10px;
+    }
+
+    #search-result p {
+      color: black; /* Чёрный цвет для параграфов */
+    }
+
+    #search-result .book {
+      background-color: #f8f9fa; /* Светлый фон для книги */
+      color: black; /* Чёрный цвет текста */
+      padding: 15px;
+      margin: 10px auto;
+      width: 80%;
+      max-width: 600px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      text-align: left;
+    }
+
+    #search-result .book h3 {
+      color: black; /* Чёрный цвет для заголовка */
+    }
+
+    #search-result .book p {
+      color: black; /* Чёрный цвет для текста */
+    }
   </style>
 </head>
 <body>
@@ -192,7 +222,7 @@
         });
         if (!response.ok) {
           const errorData = await response.json();
-          if (errorData.detail === 'Книга уже существует') {
+          if (errorData.detail === 'уже есть') {
             showMessage('Книга уже в базе, иди домой');
           } else {
             throw new Error('Ошибка при добавлении книги');
@@ -229,7 +259,7 @@
 
     // Функция для поиска книги по ID
     async function searchBook() {
-      const bookId = document.getElementById('search-id').value;
+      const bookId = parseInt(document.getElementById('search-id').value);
       if (!bookId) {
         alert('Введите ID книги');
         return;
@@ -238,20 +268,31 @@
       try {
         const response = await fetch(`http://127.0.0.1:8000/books/${bookId}`);
         if (!response.ok) {
-          throw new Error('Книга не найдена');
+          throw new Error('Ошибка при поиске книги');
         }
-        const book = await response.json();
+        const result = await response.json();
+
         const resultDiv = document.getElementById('search-result');
-        resultDiv.innerHTML = `
-          <div class="book">
-            <h3>${book.title}</h3>
-            <p><strong>Год:</strong> ${book.data}</p>
-            <p><strong>Почта:</strong> ${book.pocht}</p>
-          </div>
-        `;
+        if (typeof result === 'string') {
+          // Если бекенд вернул строку (сообщение об ошибке)
+          if (result === 'такой нет') {
+            resultDiv.innerHTML = '<p>Книга с таким ID ещё не добавлена</p>';
+          } else if (result === 'эта книга удалена') {
+            resultDiv.innerHTML = '<p>Книга с таким ID удалена</p>';
+          }
+        } else {
+          // Если бекенд вернул объект книги
+          resultDiv.innerHTML = `
+            <div class="book">
+              <h3>${result.title}</h3>
+              <p><strong>Год:</strong> ${result.data}</p>
+              <p><strong>Почта:</strong> ${result.pocht}</p>
+            </div>
+          `;
+        }
       } catch (error) {
         console.error('Ошибка:', error);
-        document.getElementById('search-result').innerHTML = '<p>Книга не найдена</p>';
+        document.getElementById('search-result').innerHTML = '<p>Ошибка при поиске книги</p>';
       }
     }
 

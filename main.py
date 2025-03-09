@@ -1,9 +1,16 @@
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, constr, EmailStr, ConfigDict
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 books = [
     {
         'title': 'na zap bes peremen',
@@ -40,7 +47,7 @@ class Newbook(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-@app.post('/books', tags=['ADD'], summary='PRESS')
+@app.post('/books/pop', tags=['ADD'], summary='PRESS')
 def create_book(new_book: Newbook):
     if any(book['title'] == new_book.title for book in books):
         raise HTTPException(status_code=404, detail='уже есть')
@@ -52,7 +59,16 @@ def create_book(new_book: Newbook):
         'id': new_id
     })
     return {'ok': True}
-a = []
+
+@app.delete('/books/{book_id}', tags=['DELETE'], summary='Удалить книгу')
+def delete_book(book_id: int):
+    global books
+    initial_length = len(books)
+    books = [book for book in books if book['id'] != book_id]
+    if len(books) == initial_length:
+        raise HTTPException(status_code=404, detail='Книга не найдена')
+    return {'ok': True}
+
 
 if __name__ == '__main__':
     uvicorn.run("main:app", reload=True)
